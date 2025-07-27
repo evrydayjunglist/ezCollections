@@ -2,6 +2,31 @@ local ADDON_NAME = ...;
 local ADDON_VERSION = GetAddOnMetadata(ADDON_NAME, "Version");
 
 local ADDON_PREFIX = "ezCollections";
+
+-- Initialize ezCollections global early for Core files
+ezCollections = ezCollections or {};
+
+-- Define basic properties needed by early-loading files
+-- Will be overwritten/extended by the main definition later
+ezCollections.AceAddon = nil;  -- Will be set after addon is defined
+ezCollections.Config = {};
+ezCollections.CFBG = {};
+ezCollections.Cache = {};
+ezCollections.Collections = {};
+ezCollections.AtlasMember = {};
+ezCollections.CameraOptions = {};
+ezCollections.CameraOptionsToCameraID = {};
+ezCollections.RaceToCameraID = {};
+ezCollections.Encounters = {};
+ezCollections.Holidays = {};
+ezCollections.Instances = {};
+ezCollections.ItemSet = {};
+ezCollections.ItemToMount = {};
+ezCollections.ItemToPet = {};
+ezCollections.Mounts = {};
+ezCollections.Pets = {};
+ezCollections.Set = {};
+ezCollections.Skin = {};
 local ENCHANT_HIDDEN = 88;
 local ITEM_HIDDEN = 15;
 local ITEM_BACK = 16;
@@ -117,6 +142,10 @@ local oGetInventoryItemID = GetInventoryItemID;
 -- ---------
 local addon = LibStub("AceAddon-3.0"):NewAddon(ADDON_NAME, "AceEvent-3.0", "AceTimer-3.0");
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME);
+
+-- Set the AceAddon reference early for files that need it
+ezCollections.AceAddon = addon;
+ezCollections.L = L;
 
 function addon:OnInitialize()
     BINDING_HEADER_EZCOLLECTIONS                    = L["Binding.Header"];
@@ -848,8 +877,7 @@ function addon:OnInitialize()
         CreateFrame("Button", "CollectionsMicroButtonAlert", CollectionsMicroButton, "MicroButtonAlertTemplate");
         LoadMicroButtonTextures(CollectionsMicroButton, "Help");
         local function getCoreMicroButtons()
-            return
-            {
+            return {
                 CharacterMicroButton,
                 SpellbookMicroButton,
                 TalentMicroButton,
@@ -971,7 +999,7 @@ function addon:OnInitialize()
         end
         microButtonOptions =
         {
-            { L["Config.Wardrobe.MicroButtons.Option.None"], function() positionMicroButtons(getCoreMicroButtons()); CollectionsMicroButton:Hide(); end },
+            { L["Config.Wardrobe.MicroButtons.Option.None"], function() positionMicroButtons(getCoreMicroButtons(), false); CollectionsMicroButton:Hide(); end },
         };
         local function GetMicroButtonTexture(button)
             if button == CharacterMicroButton then
@@ -4395,8 +4423,8 @@ end
 -- -----------------
 -- Main core and API
 -- -----------------
-ezCollections =
-{
+-- Extend the ezCollections table instead of replacing it
+for k, v in pairs({
     Name = ADDON_NAME,
     Version = ADDON_VERSION,
     AceAddon = addon,
@@ -5968,7 +5996,9 @@ ezCollections =
         end
         return var;
     end,
-};
+}) do
+    ezCollections[k] = v;
+end
 
 -- --------------------------------------
 -- Helper functions to manage collections
