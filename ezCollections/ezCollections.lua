@@ -931,6 +931,11 @@ function addon:OnInitialize()
         };
         local microButtonInserted;
         local function positionMicroButtons(buttons, inserted)
+            -- Ensure buttons parameter is valid
+            if not buttons then
+                buttons = {};
+            end
+            
             if Dominos and Dominos.MenuBar then
                 function Dominos.MenuBar:NumButtons()
                     return #buttons;
@@ -970,6 +975,11 @@ function addon:OnInitialize()
             if ElvUI then
                 local E = unpack(ElvUI);
                 local AB = E:GetModule("ActionBars");
+                -- Ensure buttons parameter is valid
+                if not buttons then
+                    buttons = {};
+                end
+                
                 -- Filter out nil buttons before assigning to prevent table index errors
                 local validButtons = {};
                 for i, button in ipairs(buttons) do
@@ -977,6 +987,12 @@ function addon:OnInitialize()
                         table.insert(validButtons, button);
                     end
                 end
+                
+                -- Initialize ezCollectionsMicroButtons if it doesn't exist
+                if not AB.ezCollectionsMicroButtons then
+                    AB.ezCollectionsMicroButtons = {};
+                end
+                
                 AB.ezCollectionsMicroButtons = validButtons;
                 -- Use UpdateMicroButtons instead of the non-existent UpdateMicroPositionDimensions
                 if AB.UpdateMicroButtons then

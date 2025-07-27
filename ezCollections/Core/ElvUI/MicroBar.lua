@@ -11,7 +11,8 @@ local success, errorMsg = pcall(function()
 	-- Check if UpdateMicroButtonsParent exists before hooking
 	if AB.UpdateMicroButtonsParent then
 		hooksecurefunc(AB, "UpdateMicroButtonsParent", function(self)
-			if CollectionsMicroButton and ElvUI_MicroBar then
+			-- Ensure CollectionsMicroButton exists and is valid before setting parent
+			if CollectionsMicroButton and ElvUI_MicroBar and CollectionsMicroButton.IsObjectType and CollectionsMicroButton:IsObjectType("Button") then
 				CollectionsMicroButton:SetParent(ElvUI_MicroBar);
 				-- Removed problematic call to UpdateMicroPositionDimensions() since it doesn't exist
 				if AB.UpdateMicroButtons then
@@ -25,12 +26,40 @@ local success, errorMsg = pcall(function()
 	if AB.UpdateMicroButtons then
 		hooksecurefunc(AB, "UpdateMicroButtons", function(self)
 			if not ElvUI_MicroBar then return end
-			if not AB.ezCollectionsMicroButtons then return end
+			
+			-- Initialize ezCollectionsMicroButtons if it doesn't exist
+			if not AB.ezCollectionsMicroButtons then
+				AB.ezCollectionsMicroButtons = {}
+			end
+			
+			-- If ezCollectionsMicroButtons is empty, try to populate it with standard buttons plus CollectionsMicroButton
+			if #AB.ezCollectionsMicroButtons == 0 and CollectionsMicroButton then
+				local standardButtons = {
+					CharacterMicroButton,
+					SpellbookMicroButton,
+					TalentMicroButton,
+					AchievementMicroButton,
+					QuestLogMicroButton,
+					SocialsMicroButton,
+					PVPMicroButton,
+					LFDMicroButton,
+					MainMenuMicroButton,
+					HelpMicroButton,
+					CollectionsMicroButton
+				}
+				
+				-- Filter out nil buttons to prevent "table index is nil" error
+				for i, button in ipairs(standardButtons) do
+					if button and button.IsObjectType and button:IsObjectType("Button") then
+						table.insert(AB.ezCollectionsMicroButtons, button);
+					end
+				end
+			end
 			
 			-- Filter out nil buttons to prevent "table index is nil" error
 			local MICRO_BUTTONS = {};
 			for i, button in ipairs(AB.ezCollectionsMicroButtons) do
-				if button and button:IsObjectType("Button") then
+				if button and button.IsObjectType and button:IsObjectType("Button") then
 					table.insert(MICRO_BUTTONS, button);
 				end
 			end
@@ -69,7 +98,8 @@ local success, errorMsg = pcall(function()
 	-- Check if SetupMicroBar exists before hooking
 	if AB.SetupMicroBar then
 		hooksecurefunc(AB, "SetupMicroBar", function(self)
-			if CollectionsMicroButton and self.HandleMicroButton then
+			-- Ensure CollectionsMicroButton exists and is valid before handling
+			if CollectionsMicroButton and self.HandleMicroButton and CollectionsMicroButton.IsObjectType and CollectionsMicroButton:IsObjectType("Button") then
 				self:HandleMicroButton(CollectionsMicroButton);
 			end
 		end);
