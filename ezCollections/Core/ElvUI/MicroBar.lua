@@ -75,7 +75,12 @@ local success, errorMsg = pcall(function()
 			for i = 1, #MICRO_BUTTONS do
 				local button = MICRO_BUTTONS[i]
 				local lastColumnButton = i - self.db.microbar.buttonsPerRow
-				lastColumnButton = MICRO_BUTTONS[lastColumnButton];
+				-- Add bounds checking to prevent "table index is nil" error
+				if lastColumnButton > 0 and lastColumnButton <= #MICRO_BUTTONS then
+					lastColumnButton = MICRO_BUTTONS[lastColumnButton];
+				else
+					lastColumnButton = nil;
+				end
 
 				button:Size(self.db.microbar.buttonSize, self.db.microbar.buttonSize * 1.4)
 				button:ClearAllPoints()
@@ -83,7 +88,7 @@ local success, errorMsg = pcall(function()
 
 				if prevButton == ElvUI_MicroBar then
 					button:Point("TOPLEFT", prevButton, "TOPLEFT", offset, -offset)
-				elseif (i - 1) % self.db.microbar.buttonsPerRow == 0 then
+				elseif (i - 1) % self.db.microbar.buttonsPerRow == 0 and lastColumnButton then
 					button:Point("TOP", lastColumnButton, "BOTTOM", 0, -spacing)
 					numRows = numRows + 1
 				else
