@@ -876,6 +876,26 @@ function addon:OnInitialize()
         CreateFrame("Button", "CollectionsMicroButton", MainMenuBarArtFrame, "MainMenuBarMicroButton");
         CreateFrame("Button", "CollectionsMicroButtonAlert", CollectionsMicroButton, "MicroButtonAlertTemplate");
         LoadMicroButtonTextures(CollectionsMicroButton, "Help");
+        
+        -- Initialize backdrop early for ElvUI compatibility
+        if ElvUI then
+            -- Add a small delay to ensure ElvUI is ready
+            local function initializeBackdrop()
+                if CollectionsMicroButton and not CollectionsMicroButton.backdrop then
+                    if CollectionsMicroButton.CreateBackdrop then
+                        pcall(function() CollectionsMicroButton:CreateBackdrop() end);
+                    else
+                        CollectionsMicroButton.backdrop = {};
+                    end
+                end
+            end
+            
+            if C_Timer and C_Timer.After then
+                C_Timer.After(0.1, initializeBackdrop);
+            else
+                initializeBackdrop();
+            end
+        end
         local function getCoreMicroButtons()
             return {
                 CharacterMicroButton,
@@ -994,9 +1014,48 @@ function addon:OnInitialize()
                 end
                 
                 AB.ezCollectionsMicroButtons = validButtons;
-                -- Use UpdateMicroButtons instead of the non-existent UpdateMicroPositionDimensions
+                
+                -- Use UpdateMicroButtons with safety checks and delayed execution
                 if AB.UpdateMicroButtons then
-                    AB:UpdateMicroButtons();
+                    -- Add a small delay to ensure all buttons are properly initialized
+                    local function safeUpdateMicroButtons()
+                        -- Additional safety check to ensure ElvUI_MicroBar exists and is ready
+                        if not ElvUI_MicroBar then
+                            -- If the microbar doesn't exist yet, try again in a moment
+                            C_Timer.After(0.1, safeUpdateMicroButtons);
+                            return;
+                        end
+                        
+                        -- Ensure all buttons have proper backdrop before ElvUI processes them
+                        for i, button in ipairs(validButtons) do
+                            if button and button.IsObjectType and button:IsObjectType("Button") then
+                                -- Make sure the button has a backdrop property to prevent nil access
+                                if not button.backdrop and button.CreateBackdrop then
+                                    -- Try to create backdrop if the method exists
+                                    pcall(function() button:CreateBackdrop() end);
+                                elseif not button.backdrop then
+                                    -- Create a minimal backdrop table to prevent nil access
+                                    button.backdrop = {};
+                                end
+                            end
+                        end
+                        
+                        -- Now safely call UpdateMicroButtons
+                        local success, err = pcall(function()
+                            AB:UpdateMicroButtons();
+                        end);
+                        
+                        if not success then
+                            print("ezCollections: Error updating micro buttons:", err);
+                        end
+                    end
+                    
+                    -- Use a timer to ensure proper execution order
+                    if C_Timer and C_Timer.After then
+                        C_Timer.After(0.05, safeUpdateMicroButtons);
+                    else
+                        safeUpdateMicroButtons();
+                    end
                 end
                 return;
             end
@@ -1073,6 +1132,16 @@ function addon:OnInitialize()
             CollectionsMicroButton:SetNormalTexture(name.."-Up");
             CollectionsMicroButton:SetPushedTexture(name.."-Down");
             CollectionsMicroButton.tooltipText = MicroButtonTooltipText(COLLECTIONS, "TOGGLECOLLECTIONS");
+            
+            -- Ensure CollectionsMicroButton has proper backdrop for ElvUI compatibility
+            if ElvUI and not CollectionsMicroButton.backdrop then
+                if CollectionsMicroButton.CreateBackdrop then
+                    pcall(function() CollectionsMicroButton:CreateBackdrop() end);
+                else
+                    CollectionsMicroButton.backdrop = {};
+                end
+            end
+            
             CollectionsMicroButton.newbieText = format(L["Tooltip.MicroButton"],
                                                        (lmb ~= 0 or rmb ~= 0)
                                                        and format(L["Tooltip.MicroButton.Buttons"],

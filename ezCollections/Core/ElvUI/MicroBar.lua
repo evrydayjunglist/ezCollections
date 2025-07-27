@@ -149,6 +149,17 @@ local success, errorMsg = pcall(function()
 		hooksecurefunc(AB, "SetupMicroBar", function(self)
 			-- Ensure CollectionsMicroButton exists and is valid before handling
 			if CollectionsMicroButton and self.HandleMicroButton and CollectionsMicroButton.IsObjectType and CollectionsMicroButton:IsObjectType("Button") then
+				-- Ensure the button has proper backdrop before ElvUI tries to style it
+				if not CollectionsMicroButton.backdrop then
+					-- Try to create backdrop if the button has the method
+					if CollectionsMicroButton.CreateBackdrop then
+						pcall(function() CollectionsMicroButton:CreateBackdrop() end);
+					else
+						-- Create a minimal backdrop table to prevent nil access
+						CollectionsMicroButton.backdrop = {};
+					end
+				end
+				
 				-- Additional safety check for HandleMicroButton method
 				local success, err = pcall(function()
 					self:HandleMicroButton(CollectionsMicroButton);
@@ -158,6 +169,60 @@ local success, errorMsg = pcall(function()
 				end
 			end
 		end);
+	end
+	
+	-- Hook HandleMicroButton to ensure backdrop safety
+	if AB.HandleMicroButton then
+		local originalHandleMicroButton = AB.HandleMicroButton;
+		AB.HandleMicroButton = function(self, button)
+			if button and button.IsObjectType and button:IsObjectType("Button") then
+				-- Ensure button has backdrop before processing
+				if not button.backdrop then
+					if button.CreateBackdrop then
+						pcall(function() button:CreateBackdrop() end);
+					else
+						button.backdrop = {};
+					end
+				end
+			end
+			return originalHandleMicroButton(self, button);
+		end
+	end
+	
+	-- Additional safety hooks for other micro button functions that might access backdrop
+	if AB.HandleMicroTextures then
+		local originalHandleMicroTextures = AB.HandleMicroTextures;
+		AB.HandleMicroTextures = function(self, button)
+			if button and button.IsObjectType and button:IsObjectType("Button") then
+				-- Ensure button has backdrop before processing textures
+				if not button.backdrop then
+					if button.CreateBackdrop then
+						pcall(function() button:CreateBackdrop() end);
+					else
+						button.backdrop = {};
+					end
+				end
+			end
+			return originalHandleMicroTextures(self, button);
+		end
+	end
+	
+	-- Hook UpdateMicroButtonTexture for additional safety
+	if AB.UpdateMicroButtonTexture then
+		local originalUpdateMicroButtonTexture = AB.UpdateMicroButtonTexture;
+		AB.UpdateMicroButtonTexture = function(self, button, ...)
+			if button and button.IsObjectType and button:IsObjectType("Button") then
+				-- Ensure button has backdrop before updating textures
+				if not button.backdrop then
+					if button.CreateBackdrop then
+						pcall(function() button:CreateBackdrop() end);
+					else
+						button.backdrop = {};
+					end
+				end
+			end
+			return originalUpdateMicroButtonTexture(self, button, ...);
+		end
 	end
 end)
 
