@@ -943,7 +943,10 @@ function addon:OnInitialize()
                 local E = unpack(ElvUI);
                 local AB = E:GetModule("ActionBars");
                 AB.ezCollectionsMicroButtons = buttons;
-                AB:UpdateMicroPositionDimensions();
+                -- Use UpdateMicroButtons instead of the non-existent UpdateMicroPositionDimensions
+                if AB.UpdateMicroButtons then
+                    AB:UpdateMicroButtons();
+                end
                 return;
             end
             microButtonInserted = inserted;
