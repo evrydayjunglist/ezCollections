@@ -26,7 +26,17 @@ local success, errorMsg = pcall(function()
 		hooksecurefunc(AB, "UpdateMicroButtons", function(self)
 			if not ElvUI_MicroBar then return end
 			if not AB.ezCollectionsMicroButtons then return end
-			local MICRO_BUTTONS = AB.ezCollectionsMicroButtons;
+			
+			-- Filter out nil buttons to prevent "table index is nil" error
+			local MICRO_BUTTONS = {};
+			for i, button in ipairs(AB.ezCollectionsMicroButtons) do
+				if button and button:IsObjectType("Button") then
+					table.insert(MICRO_BUTTONS, button);
+				end
+			end
+			
+			-- If no valid buttons, return early
+			if #MICRO_BUTTONS == 0 then return end
 
 			local numRows = 1
 			local prevButton = ElvUI_MicroBar
