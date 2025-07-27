@@ -973,7 +973,7 @@ function addon:OnInitialize()
                 -- Filter out nil buttons before assigning to prevent table index errors
                 local validButtons = {};
                 for i, button in ipairs(buttons) do
-                    if button and button:IsObjectType and button:IsObjectType("Button") then
+                    if button and button.IsObjectType and button:IsObjectType("Button") then
                         table.insert(validButtons, button);
                     end
                 end
