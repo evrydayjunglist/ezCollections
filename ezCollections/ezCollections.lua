@@ -942,7 +942,14 @@ function addon:OnInitialize()
             if ElvUI then
                 local E = unpack(ElvUI);
                 local AB = E:GetModule("ActionBars");
-                AB.ezCollectionsMicroButtons = buttons;
+                -- Filter out nil buttons before assigning to prevent table index errors
+                local validButtons = {};
+                for i, button in ipairs(buttons) do
+                    if button and button:IsObjectType and button:IsObjectType("Button") then
+                        table.insert(validButtons, button);
+                    end
+                end
+                AB.ezCollectionsMicroButtons = validButtons;
                 -- Use UpdateMicroButtons instead of the non-existent UpdateMicroPositionDimensions
                 if AB.UpdateMicroButtons then
                     AB:UpdateMicroButtons();
